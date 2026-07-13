@@ -33,7 +33,7 @@ curriculum_db = {
     }
 }
 
-# 63개 학과 마스터 데이터 정의
+# 63개 학과 마스터 데이터 정의 (의예과 오타 교정 완료)
 major_db = {
     "공학계열": {
         "컴퓨터공학과": {"핵심": ["데이터 과학", "소프트웨어와 생활", "미적분II"], "권장": ["확률과 통계", "기하", "실용 통계"]},
@@ -132,7 +132,7 @@ def get_subject_explanation(sub_name, major_name):
         reason = f"4차 산업 핵심 기술인 알고리즘 설계 역량과 대용량 데이터 정제 체계를 실습하는 필수 전공 연계 교과입니다."
         benefit = "첨단 융합형 공학 인재로서의 실무 프로그래밍 잠재력을 입증하여 학생부 경쟁력을 선점합니다."
     elif "물리학" in sub_name or "역학" in sub_name or "전자기" in sub_name:
-        reason = f"{major_name} 인프라의 핵심인 하드웨어 메커니즘과 자연물리 법칙을 공학적으로 구현하는 기초 학문입니다."
+        reason = f"{major_name} 인프라의 핵심인 하드웨어 메커니즘 and 자연물리 법칙을 공학적으로 구현하는 기초 학문입니다."
         benefit = "이공계 전공 평가진이 가장 중요하게 검토하는 하드웨어 및 시스템 구현 역량을 시각화합니다."
     elif "화학" in sub_name or "물질" in sub_name:
         reason = f"미세 물질의 분자 반응과 신소재 메커니즘을 규명하여 전공 관련 실험 설계의 뼈대를 다집니다."
@@ -199,18 +199,22 @@ def run_ai_diagnosis(selected_list, major_name, category_name, available_missing
 st.subheader("🎯 본인의 현재 학년을 선택해 주세요")
 grade_auth = st.radio(
     "학년 선택에 따라 이수 과목 설계 범위 및 70:30 적합도 산출 가중치가 동적으로 변환됩니다.", 
-    ["현재 1학년 (2학년 선택과목 설계 시기)", "현재 2학년 (3학년 선택과목 설계 시기)"]
+    ["현재 1학년 (2학년 선택과목 설계 시기)", "현재 2학년 (3학년 선택과목 설계 시기)"],
+    key="main_grade_timeline"
 )
 
+# 과거 이수 과목 배열 초기화
+passed_subjects = []
+
 # ------------------------------------------
-# CASE A: 현재 1학년 프로세스 (2, 3학년 설계 통합형)
+# CASE A: 현재 1학년 프로세스 (고정형 3개 탭 아키텍처)
 # ------------------------------------------
 if grade_auth == "현재 1학년 (2학년 선택과목 설계 시기)":
-    tab1, tab2 = st.tabs(["📘 2·3학년 교육과정 설계", "🤖 2·3학년 통합 최적 패키지 추천"])
+    tab1, tab2, tab3 = st.tabs(["📘 2·3학년 교육과정 설계", "🤖 2·3학년 통합 최적 패키지 추천", "💡 시스템 가이드"])
     
     with tab1:
         st.header("📋 2·3학년 연속 수강 신청 시뮬레이션")
-        selected_option_t1 = st.selectbox("🎯 목표 계열 및 학과를 선택하세요:", major_options, key="t1_major_select")
+        selected_option_t1 = st.selectbox("🎯 목표 계열 및 학과를 선택하세요:", major_options, key="t1_major_select_1")
         t1_cat, t1_maj = selected_option_t1.split(" ➡️ ")
         
         st.write("---")
@@ -220,13 +224,13 @@ if grade_auth == "현재 1학년 (2학년 선택과목 설계 시기)":
             st.write("**[1학기] 영/사/과 중 택 3 (각 4학점)**")
             g1_selected = []
             for sub in curriculum_db["2학년"]["1학기"]["영사과_택3"]["과목"]:
-                if st.checkbox(sub, key=f"2_1_g1_{sub}"): g1_selected.append(sub)
+                if st.checkbox(sub, key=f"2_1_g1_1_{sub}"): g1_selected.append(sub)
             st.caption(f"선택 현황: {len(g1_selected)} / 3 개")
         with col2:
             st.write("**[1학기] 제2외국어 중 택 1 (각 3학점)**")
             g2_selected = []
             for sub in curriculum_db["2학년"]["1학기"]["외국어_택1"]["과목"]:
-                if st.checkbox(sub, key=f"2_1_g2_{sub}"): g2_selected.append(sub)
+                if st.checkbox(sub, key=f"2_1_g2_1_{sub}"): g2_selected.append(sub)
             st.caption(f"선택 현황: {len(g2_selected)} / 1 개")
             
         col3, col4 = st.columns(2)
@@ -234,16 +238,16 @@ if grade_auth == "현재 1학년 (2학년 선택과목 설계 시기)":
             st.write("**[2학기] 국/수/영/사/과 중 택 3 (각 4학점)**")
             g3_selected = []
             for sub in curriculum_db["2학년"]["2학기"]["주요_택3"]["과목"]:
-                if st.checkbox(sub, key=f"2_2_g3_{sub}"): g3_selected.append(sub)
+                if st.checkbox(sub, key=f"2_2_g3_1_{sub}"): g3_selected.append(sub)
             st.caption(f"선택 현황: {len(g3_selected)} / 3 개")
         with col4:
             st.write("**[2학기] 제2외국어 중 택 1 (각 3학점)**")
             g4_selected = []
             for sub in curriculum_db["2학년"]["2학기"]["외국어_택1"]["과목"]:
-                if st.checkbox(sub, key=f"2_2_g4_{sub}"): g4_selected.append(sub)
+                if st.checkbox(sub, key=f"2_2_g4_1_{sub}"): g4_selected.append(sub)
             st.caption(f"선택 현황: {len(g4_selected)} / 1 개")
 
-        if st.button("🚀 2학년 선택안 AI 진단 결과 보기", key="btn_t1_diag"):
+        if st.button("🚀 2학년 선택안 AI 진단 결과 보기", key="btn_t1_diag_1"):
             if len(g1_selected) != 3 or len(g2_selected) != 1 or len(g3_selected) != 3 or len(g4_selected) != 1:
                 st.error("❌ 학교 지정 2학년 학점 선택 규정을 위반했습니다. 조건 개수를 정확히 확인 후 재시도하십시오.")
             else:
@@ -258,19 +262,19 @@ if grade_auth == "현재 1학년 (2학년 선택과목 설계 시기)":
             st.write("**[1학기] 국/영/수/사/과 중 택 5 (각 4학점)**")
             g3_1_1_selected = []
             for sub in curriculum_db["3학년"]["1학기"]["주요_택5"]["과목"]:
-                if st.checkbox(sub, key=f"3_1_g1_{sub}"): g3_1_1_selected.append(sub)
+                if st.checkbox(sub, key=f"3_1_g1_1_{sub}"): g3_1_1_selected.append(sub)
             st.caption(f"선택 현황: {len(g3_1_1_selected)} / 5 개")
         with col_3_1_2:
             st.write("**[1학기] 제2외국어/교양/기정 택 1 (각 3학점)**")
             g3_1_2_selected = []
             for sub in curriculum_db["3학년"]["1학기"]["지정_택1"]["과목"]:
-                if st.checkbox(sub, key=f"3_1_g2_{sub}"): g3_1_2_selected.append(sub)
+                if st.checkbox(sub, key=f"3_1_g2_1_{sub}"): g3_1_2_selected.append(sub)
             st.caption(f"선택 현황: {len(g3_1_2_selected)} / 1 개")
         with col_3_1_3:
             st.write("**[1학기] 예술 중 택 1 (각 3학점)**")
             g3_1_3_selected = []
             for sub in curriculum_db["3학년"]["1학기"]["예술_택1"]["과목"]:
-                if st.checkbox(sub, key=f"3_1_g3_{sub}"): g3_1_3_selected.append(sub)
+                if st.checkbox(sub, key=f"3_1_g3_1_{sub}"): g3_1_3_selected.append(sub)
             st.caption(f"선택 현황: {len(g3_1_3_selected)} / 1 개")
             
         col_3_2_1, col_3_2_2, col_3_2_3 = st.columns(3)
@@ -278,22 +282,22 @@ if grade_auth == "현재 1학년 (2학년 선택과목 설계 시기)":
             st.write("**[2학기] 국/영/수/사/과 중 택 5 (각 4학점)**")
             g3_2_1_selected = []
             for sub in curriculum_db["3학년"]["2학기"]["주요_택5"]["과목"]:
-                if st.checkbox(sub, key=f"3_2_g1_{sub}"): g3_2_1_selected.append(sub)
+                if st.checkbox(sub, key=f"3_2_g1_1_{sub}"): g3_2_1_selected.append(sub)
             st.caption(f"선택 현황: {len(g3_2_1_selected)} / 5 개")
         with col_3_2_2:
             st.write("**[2학기] 제2외국어/교양/기정 택 1 (각 3학점)**")
             g3_2_2_selected = []
             for sub in curriculum_db["3학년"]["2학기"]["지정_택1"]["과목"]:
-                if st.checkbox(sub, key=f"3_2_g2_{sub}"): g3_2_2_selected.append(sub)
+                if st.checkbox(sub, key=f"3_2_g2_1_{sub}"): g3_2_2_selected.append(sub)
             st.caption(f"선택 현황: {len(g3_2_2_selected)} / 1 개")
         with col_3_2_3:
             st.write("**[2학기] 예술 중 택 1 (각 3학점)**")
             g3_2_3_selected = []
             for sub in curriculum_db["3학년"]["2학기"]["예술_택1"]["과목"]:
-                if st.checkbox(sub, key=f"3_2_g3_{sub}"): g3_2_3_selected.append(sub)
+                if st.checkbox(sub, key=f"3_2_g3_1_{sub}"): g3_2_3_selected.append(sub)
             st.caption(f"선택 현황: {len(g3_2_3_selected)} / 1 개")
 
-        if st.button("🚀 3학년 선택안 AI 진단 결과 보기", key="btn_t2_diag"):
+        if st.button("🚀 3학년 선택안 AI 진단 결과 보기", key="btn_t2_diag_1"):
             if len(g3_1_1_selected) != 5 or len(g3_1_2_selected) != 1 or len(g3_1_3_selected) != 1 or \
                len(g3_2_1_selected) != 5 or len(g3_2_2_selected) != 1 or len(g3_2_3_selected) != 1:
                 st.error("❌ 학교 지정 3학년 수강 신청 학점 규정을 준수하지 않았습니다. 조건 개수를 확인하십시오.")
@@ -305,7 +309,7 @@ if grade_auth == "현재 1학년 (2학년 선택과목 설계 시기)":
 
     with tab2:
         st.header("🤖 2·3학년 통합 최적 패키지 추천")
-        selected_option_t3 = st.selectbox("🎯 목표 계열 및 학과를 선택하세요:", major_options, key="t3_major_select")
+        selected_option_t3 = st.selectbox("🎯 목표 계열 및 학과를 선택하세요:", major_options, key="t3_major_select_1")
         t3_cat, t3_maj = selected_option_t3.split(" ➡️ ")
         
         if t3_maj:
@@ -338,8 +342,12 @@ if grade_auth == "현재 1학년 (2학년 선택과목 설계 시기)":
             st.subheader(f"📋 2·3학년 통합 정밀 추천 포트폴리오 (총 22개 과목 일괄 구성)")
             st.dataframe(df_all, use_container_width=True, hide_index=True)
 
+    with tab3:
+        st.header("💡 1학년 사용자를 위한 시스템 가이드")
+        st.info("현재 1학년 학생은 고교학점제 규정상 2학년과 3학년 과목 설계를 순차적으로 연속 진행해야 합니다. 1번 탭에서 2학년 및 3학년 시뮬레이션을 원스톱으로 마친 뒤, 2번 탭에서 전공에 필요한 22개 매칭 과목 리스트를 받아보십시오.")
+
 # ------------------------------------------
-# CASE B: 현재 2학년 프로세스 (3학년 과목 설계 중심)
+# CASE B: 현재 2학년 프로세스 (고정형 3개 탭 아키텍처)
 # ------------------------------------------
 else:
     tab1, tab2, tab3 = st.tabs(["🎒 2학년 기이수 과목 확인", "📗 3학년 교육과정 설계", "🤖 3학년 맞춤 최적 패키지 추천"])
@@ -348,28 +356,26 @@ else:
         st.header("🎒 2학년 때 이수했던 과목을 체크해 주세요")
         st.write("3학년 과목의 30% 가중치인 '과목 연계성 점수'를 연산하기 위한 과거 이력 추적 장치입니다.")
         
-        passed_subjects = []
-        
         col_p1, col_p2 = st.columns(2)
         with col_p1:
             st.write("📌 **2학년 1학기 때 이수한 과목 체크**")
             for sub in curriculum_db["2학년"]["1학기"]["영사과_택3"]["과목"]:
-                if st.checkbox(sub, key=f"passed_2_1_g1_{sub}"): passed_subjects.append(sub)
+                if st.checkbox(sub, key=f"passed_2_1_g1_2_{sub}"): passed_subjects.append(sub)
             for sub in curriculum_db["2학년"]["1학기"]["외국어_택1"]["과목"]:
-                if st.checkbox(sub, key=f"passed_2_1_g2_{sub}"): passed_subjects.append(sub)
+                if st.checkbox(sub, key=f"passed_2_1_g2_2_{sub}"): passed_subjects.append(sub)
         with col_p2:
             st.write("📌 **2학년 2학기 때 이수한 과목 체크**")
             for sub in curriculum_db["2학년"]["2학기"]["주요_택3"]["과목"]:
-                if st.checkbox(sub, key=f"passed_2_2_g3_{sub}"): passed_subjects.append(sub)
+                if st.checkbox(sub, key=f"passed_2_2_g3_2_{sub}"): passed_subjects.append(sub)
             for sub in curriculum_db["2학년"]["2학기"]["외국어_택1"]["과목"]:
-                if st.checkbox(sub, key=f"passed_2_2_g4_{sub}"): passed_subjects.append(sub)
+                if st.checkbox(sub, key=f"passed_2_2_g4_2_{sub}"): passed_subjects.append(sub)
                 
         st.success(f"현재 시스템이 인지한 2학년 이수 과목 개수: **{len(passed_subjects)}개**")
-        st.info("💡 위 체크박스를 선택한 후, 바로 다음 2번 및 3번 탭으로 이동하시면 실시간 연계 스코어가 대입됩니다.")
+        st.info("💡 2학년 때 이수한 과목을 모두 체크하셨다면, 바로 2번 및 3번 탭으로 이동하여 3학년 과목을 설계해 주십시오.")
 
     with tab2:
         st.header("📋 3학년 수강 신청 시뮬레이션 (2학년 이수 연계 반영)")
-        selected_option_t2_3 = st.selectbox("🎯 목표 계열 및 학과를 선택하세요:", major_options, key="t2_3_major_select")
+        selected_option_t2_3 = st.selectbox("🎯 목표 계열 및 학과를 선택하세요:", major_options, key="t2_3_major_select_2")
         t2_3_cat, t2_3_maj = selected_option_t2_3.split(" ➡️ ")
         
         st.subheader("📌 1학기 선택")
@@ -378,19 +384,19 @@ else:
             st.write("**[그룹 1] 국/영/수/사/과 중 택 5 (각 4학점)**")
             g3_1_1_selected = []
             for sub in curriculum_db["3학년"]["1학기"]["주요_택5"]["과목"]:
-                if st.checkbox(sub, key=f"3_1_g1_3_{sub}"): g3_1_1_selected.append(sub)
+                if st.checkbox(sub, key=f"3_1_g1_2_{sub}"): g3_1_1_selected.append(sub)
             st.caption(f"선택 현황: {len(g3_1_1_selected)} / 5 개")
         with col_312:
             st.write("**[그룹 2] 제2외국어/교양/기정 택 1 (각 3학점)**")
             g3_1_2_selected = []
             for sub in curriculum_db["3학년"]["1학기"]["지정_택1"]["과목"]:
-                if st.checkbox(sub, key=f"3_1_g2_3_{sub}"): g3_1_2_selected.append(sub)
+                if st.checkbox(sub, key=f"3_1_g2_2_{sub}"): g3_1_2_selected.append(sub)
             st.caption(f"선택 현황: {len(g3_1_2_selected)} / 1 개")
         with col_313:
             st.write("**[그룹 3] 예술 중 택 1 (각 3학점)**")
             g3_1_3_selected = []
             for sub in curriculum_db["3학년"]["1학기"]["예술_택1"]["과목"]:
-                if st.checkbox(sub, key=f"3_1_g3_3_{sub}"): g3_1_3_selected.append(sub)
+                if st.checkbox(sub, key=f"3_1_g3_2_{sub}"): g3_1_3_selected.append(sub)
             st.caption(f"선택 현황: {len(g3_1_3_selected)} / 1 개")
             
         st.subheader("📌 2학기 선택")
@@ -399,22 +405,22 @@ else:
             st.write("**[그룹 1] 국/영/수/사/과 중 택 5 (각 4학점)**")
             g3_2_1_selected = []
             for sub in curriculum_db["3학년"]["2학기"]["주요_택5"]["과목"]:
-                if st.checkbox(sub, key=f"3_2_g1_3_{sub}"): g3_2_1_selected.append(sub)
+                if st.checkbox(sub, key=f"3_2_g1_2_{sub}"): g3_2_1_selected.append(sub)
             st.caption(f"선택 현황: {len(g3_2_1_selected)} / 5 개")
         with col_322:
             st.write("**[그룹 2] 제2외국어/교양/기정 택 1 (각 3학점)**")
             g3_2_2_selected = []
             for sub in curriculum_db["3학년"]["2학기"]["지정_택1"]["과목"]:
-                if st.checkbox(sub, key=f"3_2_g2_3_{sub}"): g3_2_2_selected.append(sub)
+                if st.checkbox(sub, key=f"3_2_g2_2_{sub}"): g3_2_2_selected.append(sub)
             st.caption(f"선택 현황: {len(g3_2_2_selected)} / 1 개")
         with col_323:
-            st.write("**[그룹 3] 예술 중 택 1 (각 3학점)**")
+            st.write("**[2학기] 예술 중 택 1 (각 3학점)**")
             g3_2_3_selected = []
             for sub in curriculum_db["3학년"]["2학기"]["예술_택1"]["과목"]:
-                if st.checkbox(sub, key=f"3_2_g3_3_{sub}"): g3_2_3_selected.append(sub)
+                if st.checkbox(sub, key=f"3_2_g3_2_{sub}"): g3_2_3_selected.append(sub)
             st.caption(f"선택 현황: {len(g3_2_3_selected)} / 1 개")
 
-        if st.button("🚀 3학년 설계안 AI 진단받기", key="btn_t2_3_diag"):
+        if st.button("🚀 3학년 설계안 AI 진단받기", key="btn_t2_3_diag_2"):
             if len(g3_1_1_selected) != 5 or len(g3_1_2_selected) != 1 or len(g3_1_3_selected) != 1 or \
                len(g3_2_1_selected) != 5 or len(g3_2_2_selected) != 1 or len(g3_2_3_selected) != 1:
                 st.error("❌ 학교 지정 수강 신청 학점 규정을 준수하지 않았습니다. 조건 개수를 확인하십시오.")
@@ -427,7 +433,7 @@ else:
     with tab3:
         st.header("🤖 3학년 맞춤 최적 패키지 추천")
         st.write("2학년 이수 이력을 바탕으로, 3학년 교육과정 내에서 선택할 수 있는 **총 14개 최적 과목 조합**을 스코어링합니다.")
-        selected_option_t3_3 = st.selectbox("🎯 목표 계열 및 학과를 선택하세요:", major_options, key="t3_3_major_select")
+        selected_option_t3_3 = st.selectbox("🎯 목표 계열 및 학과를 선택하세요:", major_options, key="t3_3_major_select_2")
         t3_3_cat, t3_3_maj = selected_option_t3_3.split(" ➡️ ")
         
         if t3_3_maj:
@@ -449,7 +455,9 @@ else:
                             "추천 이유": r_reason,
                             "이수 장점": r_benefit
                         })
-                    df_group = pd.DataFrame(group_records).sort_values(by="적합도 점수", ascending=False)
+                    df_group = pd.DataFrame(group_records).sort_values(by="적합도 Git 점수", ascending=False, errors='ignore')
+                    # 데이터프레임 키 정렬 안정화
+                    df_group = df_group.sort_values(by="적합도 점수", ascending=False)
                     top_n = df_group.head(group_val["선택개수"])
                     final_recommended_records.extend(top_n.to_dict(orient="records"))
             
