@@ -241,7 +241,7 @@ with tab2:
             run_ai_diagnosis(t2_total, t2_maj, t2_cat, t2_available)
 
 # ==========================================
-# TAB 3: 통합 자동 가이드 추천 모드 (순위표 레이아웃 개편)
+# TAB 3: 통합 자동 가이드 추천 모드
 # ==========================================
 with tab3:
     st.header("🤖 전공별 원클릭 최적 패키지 가이드")
@@ -273,11 +273,8 @@ with tab3:
                     top_n = df_group.head(group_val["선택개수"])
                     final_recommended_records.extend(top_n.to_dict(orient="records"))
         
-        # 1. 22개 매칭 데이터프레임 빌드 및 정합성 점수 기준 내림차순 정렬
         df_all = pd.DataFrame(final_recommended_records)
         df_all = df_all.sort_values(by="적합도 점수", ascending=False).reset_index(drop=True)
-        
-        # 2. 직관적인 1위부터 22위까지의 순위 컬럼 강제 연산 대입
         df_all.insert(0, "순위", range(1, len(df_all) + 1))
         
         top_3_summary = df_all.head(3)
@@ -286,8 +283,7 @@ with tab3:
         st.write("---")
         st.info(f"💡 **{t3_maj}** 진학을 희망하는 학생을 위한 **총 22개 맞춤형 정량 이수 세트**가 빌드되었습니다. 이 중 전공 역량 기여도가 가장 높은 {', '.join(pkg_strings)} 등은 학생부 종합 전형에서 가장 핵심이 되는 전략 교과입니다.")
         
-        # 3. 오류 발생 여지가 있는 차트 컴포넌트를 완전히 들어내고 순위표 매트릭스로만 출력
-        st.subheader("📋 3개년 최적화 전공 적합도 순위표 (총 22개 과목 일괄 구성)")
+        st.subheader("📊 3개년 최적화 전공 적합도 순위표 (총 22개 과목 일괄 구성)")
         st.dataframe(
             df_all[["순위", "학년", "학기", "그룹명", "과목명", "단위수", "적합도 점수"]], 
             use_container_width=True,
