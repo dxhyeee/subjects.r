@@ -33,7 +33,7 @@ curriculum_db = {
     }
 }
 
-# 63개 학과 마스터 데이터 정의 (핵심 및 권장 과목 매핑 룰셋)
+# 63개 학과 마스터 데이터 정의 (핵심 및 권장 과목 매핑)
 major_db = {
     "공학계열": {
         "컴퓨터공학과": {"핵심": ["데이터 과학", "소프트웨어와 생활", "미적분II"], "권장": ["확률과 통계", "기하", "실용 통계"]},
@@ -110,15 +110,15 @@ major_db = {
     }
 }
 
-# 전체 단일 교과 세트 추출
 all_unique_subjects = set()
 for grade in curriculum_db.values():
     for semester in grade.values():
         for group in semester.values():
             all_unique_subjects.update(group["과목"])
 
-# 규칙 기반 동적 스코어 연산 함수
 def calculate_dynamic_scores(major_name, category_name):
+    if category_name not in major_db or major_name not in major_db[category_name]:
+        return {}
     rules = major_db[category_name][major_name]
     scores = {}
     for sub in all_unique_subjects:
@@ -130,17 +130,9 @@ def calculate_dynamic_scores(major_name, category_name):
             scores[sub] = 60
     return scores
 
-# 공통 대계열/세부학과 양방향 셀렉터 박스 레이아웃 함수
-def draw_major_selectors(key_prefix):
-    col_a, col_b = st.columns(2)
-    with col_a:
-        cat = st.selectbox("1. 대계열 선택", list(major_db.keys()), key=f"{key_prefix}_cat")
-    with col_b:
-        maj = st.selectbox("2. 희망 학과 선택", list(major_db[cat].keys()), key=f"{key_prefix}_maj")
-    return cat, maj
-
-# AI 통합 진단 가이드 엔진
 def run_ai_diagnosis(selected_list, major_name, category_name, available_missing):
+    if category_name not in major_db or major_name not in major_db[category_name]:
+        return
     rules = major_db[category_name][major_name]
     missing_cores = [sub for sub in rules["핵심"] if sub in available_missing and sub not in selected_list]
     
@@ -154,15 +146,24 @@ def run_ai_diagnosis(selected_list, major_name, category_name, available_missing
         st.write(f"**미이수 핵심 과목**: {', '.join([f'**{m}**' for m in missing_cores])}")
         st.info(f"💡 **조정 추천**: 전공 연관성이 낮은 선택 과목을 최소화하고, 본 학년에 개설되는 필수 전공 연계 교과인 **[{', '.join(missing_cores)}]** 과목으로 교체 조율하는 것을 권장합니다.")
 
-# 3. 메인 탭 컴포넌트 분할
+# 메인 탭 컴포넌트 분할
 tab1, tab2, tab3 = st.tabs(["📘 2학년 교육과정 설계", "📗 3학년 교육과정 설계", "🤖 통합 자동 패키지 추천"])
 
 # ==========================================
-# TAB 1: 2학년 교육과정 설계 (체크박스)
+# TAB 1: 2학년 교육과정 설계
 # ==========================================
 with tab1:
     st.header("📋 2학년 수강 신청 시뮬레이션")
-    t1_cat, t1_maj = draw_major_selectors("t1")
+    
+    col_t1_a, col_t1_b = st.columns(2)
+    with col_t1_a:
+        t1_cat = st.selectbox("1. 대계열 선택", list(major_db.keys()), key="t1_cat")
+    with col_t1_b:
+        t1_maj = st.selectbox("2. 희망 학과 선택", list(major_db[t1_cat].keys()), key="t1_maj")
+        
+    # 핵심 안전장치 가드 배치 (메모리 불일치 시 렌더링을 차단하여 에러 방지)
+    if t1_maj not in major_db[t1_cat]:
+        st.stop()
     
     st.subheader("📌 1학기 선택 (학점 규정 준수 확인)")
     col1, col2 = st.columns(2)
@@ -195,11 +196,20 @@ with tab1:
             run_ai_diagnosis(t1_total, t1_maj, t1_cat, t1_available)
 
 # ==========================================
-# TAB 2: 3학년 교육과정 설계 (체크박스로 변경 완수)
+# TAB 2: 3학년 교육과정 설계
 # ==========================================
 with tab2:
     st.header("📋 3학년 수강 신청 시뮬레이션")
-    t2_cat, t2_maj = draw_major_selectors("t2")
+    
+    col_t2_a, col_t2_b = st.columns(2)
+    with col_t2_a:
+        t2_cat = st.selectbox("1. 대계열 선택", list(major_db.keys()), key="t2_cat")
+    with col_t2_b:
+        t2_maj = st.selectbox("2. 희망 학과 선택", list(major_db[t2_cat].keys()), key="t2_maj")
+        
+    # 핵심 안전장치 가드 배치
+    if t2_maj not in major_db[t2_cat]:
+        st.stop()
     
     st.subheader("📌 1학기 선택 (학점 규정 준수 확인)")
     col_3_1_1, col_3_1_2, col_3_1_3 = st.columns(3)
@@ -232,7 +242,6 @@ with tab2:
         st.caption(f"선택 현황: {len(g3_2_3_selected)} / 1 개")
 
     if st.button("🚀 3학년 설계안 AI 진단받기"):
-        # 3학년 제약 규정 카운트 검증
         if len(g3_1_1_selected) != 5 or len(g3_1_2_selected) != 1 or len(g3_1_3_selected) != 1 or \
            len(g3_2_1_selected) != 5 or len(g3_2_2_selected) != 1 or len(g3_2_3_selected) != 1:
             st.error("❌ 학교 지정 수강 신청 학점 규정을 준수하지 않았습니다. 각 학기별 세부 분할 조건(택5, 택1, 택1) 개수를 모두 명확히 채워주십시오.")
@@ -249,13 +258,20 @@ with tab2:
 # ==========================================
 with tab3:
     st.header("🤖 전공별 원클릭 최적 패키지 가이드")
-    st.write("복잡한 선택 프로세스를 단번에 해소하기 위해 전 학년에 배치해야 하는 가이드 패키지를 자동 연산합니다.")
-    t3_cat, t3_maj = draw_major_selectors("t3")
     
+    col_t3_a, col_t3_b = st.columns(2)
+    with col_t3_a:
+        t3_cat = st.selectbox("1. 대계열 선택", list(major_db.keys()), key="t3_cat")
+    with col_t3_b:
+        t3_maj = st.selectbox("2. 희망 학과 선택", list(major_db[t3_cat].keys()), key="t3_maj")
+        
+    # 핵심 안전장치 가드 배치
+    if t3_maj not in major_db[t3_cat]:
+        st.stop()
+        
     if t3_maj:
         scores_dict = calculate_dynamic_scores(t3_maj, t3_cat)
         
-        # 딕셔너리 플래트닝 및 데이터프레임 구조화
         flat_records = []
         for grade_name, grade_val in curriculum_db.items():
             for sem_name, sem_val in grade_val.items():
@@ -271,18 +287,15 @@ with tab3:
         df_all = pd.DataFrame(flat_records).drop_duplicates(subset=["과목명"]).reset_index(drop=True)
         df_all = df_all.sort_values(by="적합도 점수", ascending=False).reset_index(drop=True)
         
-        # 상위 3개 최적 권장안 단일 자연어 변환
         top_3 = df_all.head(3)
         pkg_strings = [f"**{row['과목명']}**({row['학년']} {row['학기']}, {row['단위수']}학점)" for _, row in top_3.iterrows()]
         
         st.write("---")
         st.info(f"💡 **{t3_maj}** 진학 설계가 완전 처음이라면, 우리 학교 편성표 기준 {', '.join(pkg_strings)} 교과목들을 핵심 패키지로 바인딩하여 수강 신청하는 것을 권장합니다.")
         
-        # 가로형 막대그래프 렌더링
         st.subheader("📊 과목별 전공 적합도 지표 가시화")
         chart_data = df_all[["과목명", "적합도 점수"]].set_index("과목명")
         st.bar_chart(chart_data, horizontal=True)
         
-        # 전체 데이터 행렬 표
         st.subheader("📋 전체 개설 과목 가산 스코어 매트릭스")
         st.dataframe(df_all[["학년", "학기", "과목명", "단위수", "적합도 점수"]], use_container_width=True)
