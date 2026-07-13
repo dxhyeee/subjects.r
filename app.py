@@ -33,7 +33,7 @@ curriculum_db = {
     }
 }
 
-# 63개 학과 마스터 데이터 정의 (영문 오타 완벽 교정 완료)
+# 63개 학과 마스터 데이터 정의 (오타 완벽 교정 완료)
 major_db = {
     "공학계열": {
         "컴퓨터공학과": {"핵심": ["데이터 과학", "소프트웨어와 생활", "미적분II"], "권장": ["확률과 통계", "기하", "실용 통계"]},
@@ -85,7 +85,7 @@ major_db = {
         "회계학과": {"핵심": ["경제 수학", "확률과 통계", "실용 통계"], "권장": ["데이터 과학", "수학과제 탐구"]}
     },
     "의학보건계열": {
-        "ui예과": {"핵심": ["생명과학", "세포와 물질대사", "생물의 유전"], "권장": ["화학", "화학 반응의 세계", "미적분II"]},
+        "의예과": {"핵심": ["생명과학", "세포와 물질대사", "생물의 유전"], "권장": ["화학", "화학 반응의 세계", "미적분II"]},
         "치의예과": {"핵심": ["생명과학", "세포와 물질대사", "미술 창작"], "권장": ["화학", "생물의 유전", "미적분II"]},
         "한의예과": {"핵심": ["생명과학", "세포와 물질대사", "인문학과 윤리"], "권장": ["지구과학", "윤리와 사상", "과학의 역사와 문화"]},
         "약학과": {"핵심": ["화학", "화학 반응의 세계", "세포와 물질대사"], "권장": ["생명과학", "생물의 유전", "미적분II"]},
@@ -122,20 +122,24 @@ for grade in curriculum_db.values():
             all_unique_subjects.update(group["과목"])
 
 def calculate_dynamic_scores(major_name, category_name):
+    if category_name not in major_db or major_name not in major_db[category_name]:
+        return {}
     rules = major_db[category_name][major_name]
     scores = {}
     for sub in all_unique_subjects:
-        if sub in rules["핵심"]:
+        if sub in rules.get("핵심", []):
             scores[sub] = 98
-        elif sub in rules["권장"]:
+        elif sub in rules.get("권장", []):
             scores[sub] = 85
         else:
             scores[sub] = 60
     return scores
 
 def run_ai_diagnosis(selected_list, major_name, category_name, available_missing):
+    if category_name not in major_db or major_name not in major_db[category_name]:
+        return
     rules = major_db[category_name][major_name]
-    missing_cores = [sub for sub in rules["핵심"] if sub in available_missing and sub not in selected_list]
+    missing_cores = [sub for sub in rules.get("핵심", []) if sub in available_missing and sub not in selected_list]
     
     st.write("---")
     st.subheader("🤖 AI 진단 및 조정 권고 리포트")
@@ -271,7 +275,7 @@ with tab2:
             run_ai_diagnosis(t2_total, t2_maj, t2_cat, t2_available)
 
 # ==========================================
-# TAB 3: 통합 자동 가이드 추천 모드 (정수 리스트 매핑 완수)
+# TAB 3: 통합 자동 가이드 추천 모드
 # ==========================================
 with tab3:
     st.header("🤖 전공별 원클릭 최적 패키지 가이드")
@@ -306,7 +310,6 @@ with tab3:
         df_all = pd.DataFrame(final_recommended_records)
         df_all = df_all.sort_values(by="적합도 점수", ascending=False).reset_index(drop=True)
         
-        # [교정 사항]: range 객체 대신 순수 파이썬 정수형 리스트(list)를 대입하여 표 컴포넌트 오류 방지
         df_all.insert(0, "순위", list(range(1, len(df_all) + 1)))
         
         top_3_summary = df_all.head(3)
