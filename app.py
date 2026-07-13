@@ -100,8 +100,6 @@ grade_auth = st.radio(
     key="main_grade_timeline"
 )
 
-passed_subjects = []
-
 # ------------------------------------------
 # CASE A: 현재 1학년 프로세스
 # ------------------------------------------
@@ -196,14 +194,13 @@ if grade_auth == "현재 1학년 (2학년 선택과목 설계 시기)":
         if st.button("🚀 3학년 선택안 AI 진단 결과 보기", key="btn_t2_diag_1"):
             if len(g3_1_1_selected) != 5 or len(g3_1_2_selected) != 1 or len(g3_1_3_selected) != 1 or \
                len(g3_2_1_selected) != 5 or len(g3_2_2_selected) != 1 or len(g3_2_3_selected) != 1:
-                st.error("❌ 学校 지정 3학년 수강 신청 학점 규정을 준수하지 않았습니다. 조건 개수를 확인하십시오.")
+                st.error("❌ 학교 지정 3학년 수강 신청 학점 규정을 준수하지 않았습니다. 조건 개수를 확인하십시오.")
             else:
                 t2_total = g3_1_1_selected + g3_1_2_selected + g3_1_3_selected + g3_2_1_selected + g3_2_2_selected + g3_2_3_selected
                 t2_available = (curriculum_db["3학년"]["1학기"]["주요_택5"]["과목"] + curriculum_db["3학년"]["1학기"]["지정_택1"]["과목"] + 
                                 curriculum_db["3학년"]["2학기"]["주요_택5"]["과목"] + curriculum_db["3학년"]["2학기"]["지정_택1"]["과목"])
                 run_ai_diagnosis(t2_total, t1_maj, t1_cat, t2_available)
 
-# 2번 패키지 추천 탭
     with tab2:
         st.header("🤖 2·3학년 통합 최적 패키지 추천")
         selected_option_t3 = st.selectbox("🎯 목표 계열 및 학과를 선택하세요:", major_options, key="t3_major_select_1")
@@ -244,7 +241,7 @@ if grade_auth == "현재 1학년 (2학년 선택과목 설계 시기)":
         st.info("현재 1학년 학생은 고교학점제 규정상 2학년과 3학년 과목 설계를 순차적으로 연속 진행해야 합니다. 1번 탭에서 2학년 및 3학년 시뮬레이션을 원스톱으로 마친 뒤, 2번 탭에서 전공에 필요한 22개 매칭 과목 리스트를 받아보십시오.")
 
 # ------------------------------------------
-# CASE B: 현재 2학년 프로세스
+# CASE B: 현재 2학년 프로세스 (UI 전면 고도화 개편 적용)
 # ------------------------------------------
 else:
     tab1, tab2, tab3 = st.tabs(["🎒 2학년 기이수 과목 확인", "📗 3학년 교육과정 설계", "🤖 3학년 맞춤 최적 패키지 추천"])
@@ -255,19 +252,45 @@ else:
         
         col_p1, col_p2 = st.columns(2)
         with col_p1:
-            st.write("📌 **2학년 1학기 때 이수한 과목 체크**")
+            st.subheader("📌 2학년 1학기 이수 내역 확인")
+            
+            st.write("**[그룹 1] 영/사/과 중 택 3 (각 4학점)**")
+            passed_2_1_g1 = []
             for sub in curriculum_db["2학년"]["1학기"]["영사과_택3"]["과목"]:
-                if st.checkbox(sub, key=f"passed_2_1_g1_2_{sub}"): passed_subjects.append(sub)
+                if st.checkbox(sub, key=f"passed_2_1_g1_{sub}"): 
+                    passed_2_1_g1.append(sub)
+            st.caption(f"선택 현황: {len(passed_2_1_g1)} / 3 개")
+            
+            st.write("**[그룹 2] 제2외국어 중 택 1 (각 3학점)**")
+            passed_2_1_g2 = []
             for sub in curriculum_db["2학년"]["1학기"]["외국어_택1"]["과목"]:
-                if st.checkbox(sub, key=f"passed_2_1_g2_2_{sub}"): passed_subjects.append(sub)
+                if st.checkbox(sub, key=f"passed_2_1_g2_{sub}"): 
+                    passed_2_1_g2.append(sub)
+            st.caption(f"선택 현황: {len(passed_2_1_g2)} / 1 개")
+            
         with col_p2:
-            st.write("📌 **2학년 2학기 때 이수한 과목 체크**")
+            st.subheader("📌 2학년 2학기 이수 내역 확인")
+            
+            st.write("**[그룹 1] 국/수/영/사/과 중 택 3 (각 4학점)**")
+            passed_2_2_g1 = []
             for sub in curriculum_db["2학년"]["2학기"]["주요_택3"]["과목"]:
-                if st.checkbox(sub, key=f"passed_2_2_g3_2_{sub}"): passed_subjects.append(sub)
+                if st.checkbox(sub, key=f"passed_2_2_g3_{sub}"): 
+                    passed_2_2_g1.append(sub)
+            st.caption(f"선택 현황: {len(passed_2_2_g1)} / 3 개")
+            
+            st.write("**[그룹 2] 제2외국어 중 택 1 (각 3학점)**")
+            passed_2_2_g2 = []
             for sub in curriculum_db["2학년"]["2학기"]["외국어_택1"]["과목"]:
-                if st.checkbox(sub, key=f"passed_2_2_g4_2_{sub}"): passed_subjects.append(sub)
+                if st.checkbox(sub, key=f"passed_2_2_g4_{sub}"): 
+                    passed_2_2_g2.append(sub)
+            st.caption(f"선택 현황: {len(passed_2_2_g2)} / 1 개")
                 
+        # 체크된 모든 데이터를 최종 병합하여 연산 장치로 연결
+        passed_subjects = passed_2_1_g1 + passed_2_1_g2 + passed_2_2_g1 + passed_2_2_g2
+        
+        st.write("---")
         st.success(f"현재 시스템이 인지한 2학년 이수 과목 개수: **{len(passed_subjects)}개**")
+        st.info("💡 본인의 실제 2학년 학생부 이수 내역과 수치(택3, 택1 등)가 정확히 일치하는지 확인 후, 2번 및 3번 탭으로 이동하여 주십시오.")
 
     with tab2:
         st.header("📋 3학년 수강 신청 시뮬레이션 (2학년 이수 연계 반영)")
@@ -304,13 +327,13 @@ else:
                 if st.checkbox(sub, key=f"3_2_g1_2_{sub}"): g3_2_1_selected.append(sub)
             st.caption(f"선택 현황: {len(g3_2_1_selected)} / 5 개")
         with col_322:
-            st.write("**[2학기] 제2외국어/교양/기정 택 1 (각 3학점)**")
+            st.write("**[그룹 2] 제2외국어/교양/기정 택 1 (각 3학점)**")
             g3_2_2_selected = []
             for sub in curriculum_db["3학년"]["2학기"]["지정_택1"]["과목"]:
                 if st.checkbox(sub, key=f"3_2_g2_2_{sub}"): g3_2_2_selected.append(sub)
             st.caption(f"선택 현황: {len(g3_2_2_selected)} / 1 개")
         with col_323:
-            st.write("**[2학기] 예술 중 택 1 (각 3학점)**")
+            st.write("**[그룹 3] 예술 중 택 1 (각 3학점)**")
             g3_2_3_selected = []
             for sub in curriculum_db["3학년"]["2학기"]["예술_택1"]["과목"]:
                 if st.checkbox(sub, key=f"3_2_g3_2_{sub}"): g3_2_3_selected.append(sub)
