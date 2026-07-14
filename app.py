@@ -78,14 +78,14 @@ def calculate_dynamic_scores(major_name, category_name, passed_list, current_gra
         scores[sub] = relation_score + connection_score
     return scores
 
-# [조건부 논리 교정 완수]: 핵심 및 권장 과목 누락 상황을 분리 판정하는 정밀 AI 진단 함수
+# [수정 사항 1]: 타이틀 영역 명칭을 '전공 적합성 AI 정밀 진단 리포트'로 직관성 개편
 def run_ai_diagnosis(selected_list, major_name, category_name, grade_label):
     if category_name not in major_db or major_name not in major_db[category_name]:
         return
     rules = major_db[category_name][major_name]
     
     st.write("---")
-    st.subheader(f"🔬 울산가온고 전공 적합성 AI 정밀 진단 리포트 ({grade_label})")
+    st.subheader(f"🔬 전공 적합성 AI 정밀 진단 리포트 ({grade_label})")
     
     if "2학년" in grade_label:
         grade_subjects = (curriculum_db["2학년"]["1학기"]["영사과_택3"]["과목"] + 
@@ -120,7 +120,7 @@ def run_ai_diagnosis(selected_list, major_name, category_name, grade_label):
     if len(total_target_cores) == 0:
         st.info(f"ℹ️ **[학년별 교육과정 편성 안내]**\n\n울산가온고 교육과정 구조상 **2학년** 시기에는 **{major_name}**의 필수 핵심 교과목이 편성되어 있지 않으며, 해당 과목들은 전부 **3학년**에 배치되어 있습니다. 따라서 2학년 핵심 과목 충족도가 0개인 것은 정상입니다.")
         if len(missing_recoms) == 0 and len(recom_in_selected) > 0:
-            st.success(f"✅ **[{grade_label} 최적화 완료]** 현재 2학년 과정에서 선택 가능한 학과 필수 권장 과목({', '.join(recom_in_selected)})을 완벽히 선택하셨습니다.")
+            st.success(f"✅ **[{grade_label} 최적화 완료]** 현재 2학년 과정에서 선택 가능한 학과 필수 권장 과목({', '.join(recom_in_selected)})을 교육과정 규칙에 맞춰 완벽히 선택하셨습니다.")
         elif len(missing_recoms) > 0:
             st.warning(f"⚠️ **[기초 권장 과목 보완 권고]** 현재 2학년 개설 과목 중 해당 전공의 기초가 되는 권장 교과가 설계안에서 누락되어 있습니다. \n\n🚨 **누락된 권장 과목**: {', '.join([f'**{m}**' for m in missing_recoms])}\n\n💡 **피드백**: 학업 역량을 증명하기 위해 누락된 권장 과목 이수를 적극 고려하십시오.")
     else:
@@ -128,7 +128,6 @@ def run_ai_diagnosis(selected_list, major_name, category_name, grade_label):
             if len(missing_recoms) == 0:
                 st.success(f"🎯 **[{grade_label} 최우수 설계 조합 확인]**\n\n현재 제출하신 설계안은 핵심 과목과 권장 과목을 단 하나도 누락하지 않고 100% 만족하는 가장 이상적인 조합입니다. 입학사정관 정성 평가 시 최고 수준의 평가를 기대할 수 있습니다.")
             else:
-                # 권장 과목이 누락되었을 때 우수조합 문구를 차단하고 누락 정보를 구체화하는 조건 분기
                 st.info(f"⚡ **[{grade_label} 핵심 충족 / 권장 과목 미달 안내]**\n\n현재 설계안은 **{major_name}** 진학을 위한 필수 핵심 과목은 모두 선택했으나, 학업 깊이를 더해주는 **권장 과목 중 {len(missing_recoms)}개**가 제외되어 있습니다.\n\n🚨 **누락된 권장 과목**: {', '.join([f'**{m}**' for m in missing_recoms])}\n\n💡 **입학사정관 가이드**: 핵심 과목 이수만으로는 타 수험생과의 차별성이 부족할 수 있습니다. 공간적 여유가 있다면 누락된 권장 과목인 **[{', '.join(missing_recoms)}]**의 추가 선택을 강력히 제안합니다.")
         else:
             st.warning(f"⚠️ **[{grade_label} 전공 연계성 보완 필요]**\n\n현재 제출하신 **{grade_label}**은 필수 핵심 과목 중 일부가 누락되어 서류 평가 상의 감점 리스크가 존재합니다.")
@@ -145,7 +144,6 @@ grade_auth = st.radio(
     key="main_grade_timeline"
 )
 
-# [초기화 기능 추가]: 선택 과목만 선별하여 제거하는 청소 메커니즘
 if st.button("🔄 선택 과목 전체 초기화", help="지금까지 체크박스에 체크한 모든 과목 선택 내역을 지우고 새로 시작합니다."):
     for key in list(st.session_state.keys()):
         if key.startswith(("2_1_", "2_2_", "3_1_", "3_2_", "passed_")):
@@ -155,11 +153,12 @@ if st.button("🔄 선택 과목 전체 초기화", help="지금까지 체크박
 passed_subjects = []
 
 # ------------------------------------------
-# CASE A: 현재 1학년 프로세스
+# CASE A: 현재 1학년 프로세스 (들여쓰기 렌더링 오류 수정 완수)
 # ------------------------------------------
 if grade_auth == "현재 1학년 (2학년 선택과목 설계 시기)":
     tab1, tab2, tab3 = st.tabs(["📘 2·3학년 교육과정 설계", "🤖 2·3학년 통합 최적 패키지 추천", "💡 시스템 가이드"])
     
+    # [교정 완료]: with tab1, tab2, tab3의 수평 인덴트를 명확히 분리하여 독립 가동 처리
     with tab1:
         st.header("📋 2·3학년 연속 수강 신청 시뮬레이션")
         selected_option_t1 = st.selectbox("🎯 목표 계열 및 학과를 선택하세요:", major_options, key="t1_major_select_1")
@@ -171,12 +170,10 @@ if grade_auth == "현재 1학년 (2학년 선택과목 설계 시기)":
         with col1:
             st.write("**[1학기] 영/사/과 중 택 3 (각 4학점)**")
             g1_list = curriculum_db["2학년"]["1학기"]["영사과_택3"]["과목"]
-            # 실시간 개수 제어를 위한 세션 카운트 사전 연산
             g1_cnt = sum([st.session_state.get(f"2_1_g1_1_{sub}", False) for sub in g1_list])
             g1_selected = []
             for sub in g1_list:
                 chk = st.session_state.get(f"2_1_g1_1_{sub}", False)
-                # 상한선 도달 시 미체크 항목 하드웨어 락(disable) 처리
                 if st.checkbox(sub, key=f"2_1_g1_1_{sub}", disabled=(g1_cnt >= 3 and not chk)): g1_selected.append(sub)
             st.caption(f"선택 현황: {len(g1_selected)} / 3 개")
             
@@ -290,6 +287,7 @@ if grade_auth == "현재 1학년 (2학년 선택과목 설계 시기)":
                 t2_total = g3_1_1_selected + g3_1_2_selected + g3_1_3_selected + g3_2_1_selected + g3_2_2_selected + g3_2_3_selected
                 run_ai_diagnosis(t2_total, t1_maj, t1_cat, "3학년 과목 설계안")
 
+    # 탭 독립 분리 가동 완료
     with tab2:
         st.header("🤖 2·3학년 통합 최적 패키지 추천")
         selected_option_t3 = st.selectbox("🎯 목표 계열 및 학과를 선택하세요:", major_options, key="t3_major_select_1")
@@ -322,9 +320,16 @@ if grade_auth == "현재 1학년 (2학년 선택과목 설계 시기)":
             df_all = pd.DataFrame(final_recommended_records).sort_values(by="적합도 점수", ascending=False).reset_index(drop=True)
             df_all.insert(0, "순위", list(range(1, len(df_all) + 1)))
             
-            st.subheader(f"📋 2·3학년 통합 정밀 추천 포트폴리오 (총 22개 과목 일괄 구성)")
-            st.caption("💡 **안내**: '추천 이유'와 '이수 장점'의 구체적인 내용이 잘려 보일 경우, 해당 칸을 **더블클릭**하시면 전체 내용을 자세히 확인하실 수 있습니다.")
-            st.dataframe(df_all, use_container_width=True, hide_index=True)
+            st.subheader(f"📋 2·3학년 통합 정밀 추천 포트폴리오")
+            st.dataframe(df_all[["순위", "학년", "학기", "그룹명", "과목명", "단위수", "적합도 점수"]], use_container_width=True, hide_index=True)
+            
+            # [수정 사항 3]: 더블클릭 필요 없는 카드형 상세 정보 확장 패널 이식
+            st.write("---")
+            st.subheader("📚 한눈에 보는 과목별 상세 리포트 (더블클릭 불필요)")
+            for _, row in df_all.iterrows():
+                with st.expander(f"🏅 {row['순위']}위 : {row['과목명']} ({row['학년']} {row['학기']} | 적합도: {row['적합도 점수']}점)"):
+                    st.markdown(f"📖 **추천 사유**\n{row['추천 이유']}")
+                    st.markdown(f"🎯 **이수 시 기대 장점**\n{row['이수 장점']}")
 
     with tab3:
         st.header("💡 1학년 사용자를 위한 시스템 가이드")
@@ -334,7 +339,6 @@ if grade_auth == "현재 1학년 (2학년 선택과목 설계 시기)":
 # CASE B: 현재 2학년 프로세스
 # ------------------------------------------
 else:
-    # [명칭 리팩토링 완수]: 직관적인 한국어 탭 명칭 적용
     tab1, tab2, tab3 = st.tabs(["🎒 2학년 때 이수 과목", "📗 3학년 교육과정 설계", "🤖 3학년 맞춤 최적 패키지 추천"])
     
     with tab1:
@@ -344,7 +348,6 @@ else:
         col_p1, col_p2 = st.columns(2)
         with col_p1:
             st.subheader("📌 2학년 1학기 이수 내역 확인")
-            
             st.write("**[그룹 1] 영/사/과 중 택 3 (각 4학점)**")
             p21g1_list = curriculum_db["2학년"]["1학기"]["영사과_택3"]["과목"]
             p21g1_cnt = sum([st.session_state.get(f"passed_2_1_g1_{sub}", False) for sub in p21g1_list])
@@ -365,7 +368,6 @@ else:
             
         with col_p2:
             st.subheader("📌 2학년 2학기 이수 내역 확인")
-            
             st.write("**[그룹 1] 국/수/영/사/과 중 택 3 (각 4학점)**")
             p22g1_list = curriculum_db["2학년"]["2학기"]["주요_택3"]["과목"]
             p22g1_cnt = sum([st.session_state.get(f"passed_2_2_g3_{sub}", False) for sub in p22g1_list])
@@ -501,6 +503,13 @@ else:
             df_all = pd.DataFrame(final_recommended_records).sort_values(by="적합도 점수", ascending=False).reset_index(drop=True)
             df_all.insert(0, "순위", list(range(1, len(df_all) + 1)))
             
-            st.subheader(f"📋 3학년 맞춤 최적화 포트폴리오 (총 14개 과목 구성)")
-            st.caption("💡 **안내**: '추천 이유'와 '이수 장점'의 구체적인 내용이 잘려 보일 경우, 해당 칸을 **더블클릭**하시면 전체 내용을 자세히 확인하실 수 있습니다.")
-            st.dataframe(df_all, use_container_width=True, hide_index=True)
+            st.subheader(f"📋 3학년 맞춤 최적화 포트폴리오")
+            st.dataframe(df_all[["순위", "학년", "학기", "그룹명", "과목명", "단위수", "적합도 점수"]], use_container_width=True, hide_index=True)
+            
+            # [수정 사항 3]: 더블클릭 필요 없는 카드형 상세 정보 확장 패널 이식
+            st.write("---")
+            st.subheader("📚 한눈에 보는 과목별 상세 리포트 (더블클릭 불필요)")
+            for _, row in df_all.iterrows():
+                with st.expander(f"🏅 {row['순위']}위 : {row['과목명']} ({row['학기']} | 적합도: {row['적합도 점수']}점)"):
+                    st.markdown(f"📖 **추천 사유**\n{row['추천 이유']}")
+                    st.markdown(f"🎯 **이수 시 기대 장점**\n{row['이수 장점']}")
