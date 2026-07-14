@@ -86,7 +86,7 @@ def run_ai_diagnosis(selected_list, major_name, category_name, available_missing
     missing_recoms = [sub for sub in rules.get("권장", []) if sub in available_missing and sub not in selected_list]
     
     st.write("---")
-    st.subheader("🔬 울산가온고 전공 적합성 AI 정밀 진단 리포트")
+    st.subheader("🔬 전공 적합성 AI 정밀 진단 리포트")
     
     # 정량적 분석 지표 산출을 통한 신뢰성 확보
     total_selected = len(selected_list)
