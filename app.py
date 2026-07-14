@@ -9,6 +9,10 @@ st.set_page_config(page_title="고교학점제 과목 선택 지원 시스템", 
 st.title("🏫 울산가온고 맞춤형 고교학점제 과목 설계 시스템")
 st.write("2026학년도 교육과정 편성표 규정이 적용된 프로그램입니다.")
 
+# [시스템 코어]: 학과 간 자유로운 비교를 위한 스냅샷 저장소 세션 초기화
+if "saved_plans" not in st.session_state:
+    st.session_state.saved_plans = {}
+
 major_options = []
 for cat in major_db.keys():
     for maj in major_db[cat].keys():
@@ -146,7 +150,7 @@ grade_auth = st.radio(
 passed_subjects = []
 
 # ------------------------------------------
-# CASE A: 현재 1학년 프로세스
+# CASE A: 현재 1학년 프로세스 (2, 3학년 통합 설계안 제어)
 # ------------------------------------------
 if grade_auth == "현재 1학년 (2학년 선택과목 설계 시기)":
     tab1, tab2, tab3 = st.tabs(["📘 2·3학년 교육과정 설계", "🤖 2·3학년 통합 최적 패키지 추천", "💡 시스템 가이드"])
@@ -155,6 +159,38 @@ if grade_auth == "현재 1학년 (2학년 선택과목 설계 시기)":
         st.header("📋 2·3학년 연속 수강 신청 시뮬레이션")
         selected_option_t1 = st.selectbox("🎯 목표 계열 및 학과를 선택하세요:", major_options, key="t1_major_select_1")
         t1_cat, t1_maj = selected_option_t1.split(" ➡️ ")
+        
+        # [혁신 기능 신설]: 다중 학과 교차 비교를 위한 1학년용 저장/불러오기 제어센터
+        with st.expander("📂 설계안 저장 / 불러오기 / 학과별 비교 제어센터"):
+            col_l1, col_l2 = st.columns([3, 1])
+            with col_l1:
+                selected_plan_1 = st.selectbox("📋 저장된 설계안 리스트:", ["— 선택 안 함 —"] + list(st.session_state.saved_plans.keys()), key="sel_plan_1")
+            with col_l2:
+                st.write("")
+                st.write("")
+                if st.button("⬇️ 설계안 불러오기", key="load_btn_1", use_container_width=True):
+                    if selected_plan_1 != "— 선택 안 함 —":
+                        plan = st.session_state.saved_plans[selected_plan_1]
+                        st.session_state.t1_major_select_1 = plan["major_option"]
+                        for k in list(st.session_state.keys()):
+                            if k.startswith(("2_1_", "2_2_", "3_1_", "3_2_")): st.session_state[k] = False
+                        for k in plan["keys"]: st.session_state[k] = True
+                        st.rerun()
+            st.write("---")
+            col_s1, col_s2 = st.columns([3, 1])
+            with col_s1:
+                save_name_1 = st.text_input("💾 현재 상태를 저장할 이름 입력:", value=f"{t1_maj} 조합A", key="txt_save_1")
+            with col_s2:
+                st.write("")
+                st.write("")
+                if st.button("💾 현재 조합 스냅샷 저장", key="save_btn_1", use_container_width=True):
+                    active_keys = [k for k, v in st.session_state.items() if k.startswith(("2_1_", "2_2_", "3_1_", "3_2_")) and v == True]
+                    st.session_state.saved_plans[save_name_1] = {
+                        "major_option": selected_option_t1,
+                        "keys": active_keys
+                    }
+                    st.success(f"📥 '{save_name_1}'에 드롭다운 및 선택 과목이 안전하게 저장되었습니다!")
+                    st.rerun()
         
         st.write("---")
         st.subheader("🌱 [STEP 1] 2학년 개설 선택과목 시뮬레이션")
@@ -200,7 +236,7 @@ if grade_auth == "현재 1학년 (2학년 선택과목 설계 시기)":
                 if st.checkbox(sub, key=f"2_2_g4_1_{sub}", disabled=(g4_cnt >= 1 and not chk)): g4_selected.append(sub)
             st.caption(f"선택 현황: {len(g4_selected)} / 1 개")
 
-        # [수정 사항]: 2학년 진단 결과 보기 버튼 옆에 초기화 레이아웃 배치
+        # [요청 반영]: 진단 결과 보기 버튼 바로 우측에 대칭 정렬된 2학년 선택과목 독립 초기화 버튼 이식
         col_btn1, col_btn2 = st.columns([3, 1])
         with col_btn1:
             if st.button("🚀 2학년 선택안 AI 진단 결과 보기", key="btn_t1_diag_1", use_container_width=True):
@@ -210,9 +246,9 @@ if grade_auth == "현재 1학년 (2학년 선택과목 설계 시기)":
                     t1_total = g1_selected + g2_selected + g3_selected + g4_selected
                     run_ai_diagnosis(t1_total, t1_maj, t1_cat, "2학년 과목 설계안")
         with col_btn2:
-            if st.button("🔄 2학년 선택 초기화", key="reset_2_grade_1", use_container_width=True):
+            if st.button("🔄 2학년 과목 선택 초기화", key="reset_2_grade_1", use_container_width=True):
                 for key in list(st.session_state.keys()):
-                    if key.startswith(("2_1_", "2_2_")): st.session_state[key] = False
+                    if key.startswith(("2_1_g", "2_2_g")): st.session_state[key] = False
                 st.rerun()
 
         st.write("---")
@@ -279,7 +315,7 @@ if grade_auth == "현재 1학년 (2학년 선택과목 설계 시기)":
                 if st.checkbox(sub, key=f"3_2_g3_1_{sub}", disabled=(g323_cnt >= 1 and not chk)): g3_2_3_selected.append(sub)
             st.caption(f"선택 현황: {len(g3_2_3_selected)} / 1 개")
 
-        # [수정 사항]: 3학년 진단 결과 보기 버튼 옆에 초기화 레이아웃 배치
+        # [요청 반영]: 진단 결과 보기 버튼 바로 우측에 대칭 정렬된 3학년 선택과목 독립 초기화 버튼 이식
         col_btn3, col_btn4 = st.columns([3, 1])
         with col_btn3:
             if st.button("🚀 3학년 선택안 AI 진단 결과 보기", key="btn_t2_diag_1", use_container_width=True):
@@ -290,9 +326,9 @@ if grade_auth == "현재 1학년 (2학년 선택과목 설계 시기)":
                     t2_total = g3_1_1_selected + g3_1_2_selected + g3_1_3_selected + g3_2_1_selected + g3_2_2_selected + g3_2_3_selected
                     run_ai_diagnosis(t2_total, t1_maj, t1_cat, "3학년 과목 설계안")
         with col_btn4:
-            if st.button("🔄 3학년 선택 초기화", key="reset_3_grade_1", use_container_width=True):
+            if st.button("🔄 3학년 과목 선택 초기화", key="reset_3_grade_1", use_container_width=True):
                 for key in list(st.session_state.keys()):
-                    if key.startswith(("3_1_", "3_2_")): st.session_state[key] = False
+                    if key.startswith(("3_1_g", "3_2_g")): st.session_state[key] = False
                 st.rerun()
 
     with tab2:
@@ -342,7 +378,7 @@ if grade_auth == "현재 1학년 (2학년 선택과목 설계 시기)":
         st.info("현재 1학년 학생은 고교학점제 규정상 2학년과 3학년 과목 설계를 순차적으로 연속 진행해야 합니다. 1번 탭에서 2학년 및 3학년 시뮬레이션을 원스톱으로 마친 뒤, 2번 탭에서 전공에 필요한 22개 매칭 과목 리스트를 받아보십시오.")
 
 # ------------------------------------------
-# CASE B: 현재 2학년 프로세스
+# CASE B: 현재 2학년 프로세스 (3학년 과목 설계 중심)
 # ------------------------------------------
 else:
     tab1, tab2, tab3 = st.tabs(["🎒 2학년 때 이수 과목", "📗 3학년 교육과정 설계", "🤖 3학년 맞춤 최적 패키지 추천"])
@@ -351,6 +387,44 @@ else:
         st.header("🎒 2학년 때 이수했던 과목을 체크해 주세요")
         st.write("3학년 과목의 30% 가중치인 '과목 연계성 점수'를 연산하기 위한 과거 이력 추적 장치입니다.")
         
+        # [혁신 기능 신설]: 다중 학과 교차 비교를 위한 2학년용 저장/불러오기 제어센터
+        with st.expander("📂 설계안 저장 / 불러오기 / 학과별 비교 제어센터"):
+            col_l1_2, col_l2_2 = st.columns([3, 1])
+            with col_l1_2:
+                selected_plan_2 = st.selectbox("📋 저장된 설계안 리스트:", ["— 선택 안 함 —"] + list(st.session_state.saved_plans.keys()), key="sel_plan_2")
+            with col_l2_2:
+                st.write("")
+                st.write("")
+                if st.button("⬇️ 설계안 불러오기", key="load_btn_2", use_container_width=True):
+                    if selected_plan_2 != "— 선택 안 함 —":
+                        plan = st.session_state.saved_plans[selected_plan_2]
+                        # 학과Dropdown 동기화 유도용 강제 주입
+                        if "t2_3_major_select_2" in st.session_state:
+                            st.session_state.t2_3_major_select_2 = plan["major_option"]
+                        for k in list(st.session_state.keys()):
+                            if k.startswith(("passed_", "3_1_", "3_2_")): st.session_state[k] = False
+                        for k in plan["keys"]: st.session_state[k] = True
+                        st.rerun()
+            st.write("---")
+            col_s1_2, col_s2_2 = st.columns([3, 1])
+            with col_s1_2:
+                # 2학년 상태명 지정 처리
+                save_name_2 = st.text_input("💾 현재 상태를 저장할 이름 입력:", value="나의 설계안1", key="txt_save_2")
+            with col_s2_2:
+                st.write("")
+                st.write("")
+                if st.button("💾 현재 조합 스냅샷 저장", key="save_btn_2", use_container_width=True):
+                    active_keys = [k for k, v in st.session_state.items() if k.startswith(("passed_", "3_1_", "3_2_")) and v == True]
+                    # 현재 학과 탐색 정보 매핑 보존
+                    cur_major_opt = st.session_state.get("t2_3_major_select_2", major_options[0])
+                    st.session_state.saved_plans[save_name_2] = {
+                        "major_option": cur_major_opt,
+                        "keys": active_keys
+                    }
+                    st.success(f"📥 '{save_name_2}'에 드롭다운 및 선택 과목이 안전하게 저장되었습니다!")
+                    st.rerun()
+
+        st.write("---")
         col_p1, col_p2 = st.columns(2)
         with col_p1:
             st.subheader("📌 2학년 1학기 이수 내역 확인")
@@ -469,7 +543,7 @@ else:
                 if st.checkbox(sub, key=f"3_2_g3_2_{sub}", disabled=(g323_cnt_2 >= 1 and not chk)): g3_2_3_selected.append(sub)
             st.caption(f"선택 현황: {len(g3_2_3_selected)} / 1 개")
 
-        # [수정 사항]: 2학년 모드에서의 3학년 설계안 진단 버튼 옆 초기화 레이아웃 배치
+        # [요청 반영]: 진단 결과 보기 버튼 바로 우측에 대칭 정렬된 3학년 선택과목 독립 초기화 버튼 이식
         col_btn5, col_btn6 = st.columns([3, 1])
         with col_btn5:
             if st.button("🚀 3학년 설계안 AI 진단받기", key="btn_t2_3_diag_2", use_container_width=True):
@@ -480,9 +554,9 @@ else:
                     t2_total = g3_1_1_selected + g3_1_2_selected + g3_1_3_selected + g3_2_1_selected + g3_2_2_selected + g3_2_3_selected
                     run_ai_diagnosis(t2_total, t2_3_maj, t2_3_cat, "3학년 과목 설계안")
         with col_btn6:
-            if st.button("🔄 3학년 선택 초기화", key="reset_3_grade_2", use_container_width=True):
+            if st.button("🔄 3학년 과목 선택 초기화", key="reset_3_grade_2", use_container_width=True):
                 for key in list(st.session_state.keys()):
-                    if key.startswith(("3_1_", "3_2_")): st.session_state[key] = False
+                    if key.startswith(("3_1_g", "3_2_g")): st.session_state[key] = False
                 st.rerun()
 
     with tab3:
