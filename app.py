@@ -78,7 +78,6 @@ def calculate_dynamic_scores(major_name, category_name, passed_list, current_gra
         scores[sub] = relation_score + connection_score
     return scores
 
-# [수정 사항 1]: 타이틀 영역 명칭을 '전공 적합성 AI 정밀 진단 리포트'로 직관성 개편
 def run_ai_diagnosis(selected_list, major_name, category_name, grade_label):
     if category_name not in major_db or major_name not in major_db[category_name]:
         return
@@ -144,21 +143,14 @@ grade_auth = st.radio(
     key="main_grade_timeline"
 )
 
-if st.button("🔄 선택 과목 전체 초기화", help="지금까지 체크박스에 체크한 모든 과목 선택 내역을 지우고 새로 시작합니다."):
-    for key in list(st.session_state.keys()):
-        if key.startswith(("2_1_", "2_2_", "3_1_", "3_2_", "passed_")):
-            del st.session_state[key]
-    st.rerun()
-
 passed_subjects = []
 
 # ------------------------------------------
-# CASE A: 현재 1학년 프로세스 (들여쓰기 렌더링 오류 수정 완수)
+# CASE A: 현재 1학년 프로세스
 # ------------------------------------------
 if grade_auth == "현재 1학년 (2학년 선택과목 설계 시기)":
     tab1, tab2, tab3 = st.tabs(["📘 2·3학년 교육과정 설계", "🤖 2·3학년 통합 최적 패키지 추천", "💡 시스템 가이드"])
     
-    # [교정 완료]: with tab1, tab2, tab3의 수평 인덴트를 명확히 분리하여 독립 가동 처리
     with tab1:
         st.header("📋 2·3학년 연속 수강 신청 시뮬레이션")
         selected_option_t1 = st.selectbox("🎯 목표 계열 및 학과를 선택하세요:", major_options, key="t1_major_select_1")
@@ -208,12 +200,20 @@ if grade_auth == "현재 1학년 (2학년 선택과목 설계 시기)":
                 if st.checkbox(sub, key=f"2_2_g4_1_{sub}", disabled=(g4_cnt >= 1 and not chk)): g4_selected.append(sub)
             st.caption(f"선택 현황: {len(g4_selected)} / 1 개")
 
-        if st.button("🚀 2학년 선택안 AI 진단 결과 보기", key="btn_t1_diag_1"):
-            if len(g1_selected) != 3 or len(g2_selected) != 1 or len(g3_selected) != 3 or len(g4_selected) != 1:
-                st.error("❌ 학교 지정 2학년 학점 선택 규정을 위반했습니다. 조건 개수를 정확히 확인 후 재시도하십시오.")
-            else:
-                t1_total = g1_selected + g2_selected + g3_selected + g4_selected
-                run_ai_diagnosis(t1_total, t1_maj, t1_cat, "2학년 과목 설계안")
+        # [수정 사항]: 2학년 진단 결과 보기 버튼 옆에 초기화 레이아웃 배치
+        col_btn1, col_btn2 = st.columns([3, 1])
+        with col_btn1:
+            if st.button("🚀 2학년 선택안 AI 진단 결과 보기", key="btn_t1_diag_1", use_container_width=True):
+                if len(g1_selected) != 3 or len(g2_selected) != 1 or len(g3_selected) != 3 or len(g4_selected) != 1:
+                    st.error("❌ 학교 지정 2학년 학점 선택 규정을 위반했습니다. 조건 개수를 정확히 확인 후 재시도하십시오.")
+                else:
+                    t1_total = g1_selected + g2_selected + g3_selected + g4_selected
+                    run_ai_diagnosis(t1_total, t1_maj, t1_cat, "2학년 과목 설계안")
+        with col_btn2:
+            if st.button("🔄 2학년 선택 초기화", key="reset_2_grade_1", use_container_width=True):
+                for key in list(st.session_state.keys()):
+                    if key.startswith(("2_1_", "2_2_")): st.session_state[key] = False
+                st.rerun()
 
         st.write("---")
         st.subheader("🌲 [STEP 2] 3학년 개설 선택과목 시뮬레이션")
@@ -279,15 +279,22 @@ if grade_auth == "현재 1학년 (2학년 선택과목 설계 시기)":
                 if st.checkbox(sub, key=f"3_2_g3_1_{sub}", disabled=(g323_cnt >= 1 and not chk)): g3_2_3_selected.append(sub)
             st.caption(f"선택 현황: {len(g3_2_3_selected)} / 1 개")
 
-        if st.button("🚀 3학년 선택안 AI 진단 결과 보기", key="btn_t2_diag_1"):
-            if len(g3_1_1_selected) != 5 or len(g3_1_2_selected) != 1 or len(g3_1_3_selected) != 1 or \
-               len(g3_2_1_selected) != 5 or len(g3_2_2_selected) != 1 or len(g3_2_3_selected) != 1:
-                st.error("❌ 학교 지정 3학년 수강 신청 학점 규정을 준수하지 않았습니다. 조건 개수를 확인하십시오.")
-            else:
-                t2_total = g3_1_1_selected + g3_1_2_selected + g3_1_3_selected + g3_2_1_selected + g3_2_2_selected + g3_2_3_selected
-                run_ai_diagnosis(t2_total, t1_maj, t1_cat, "3학년 과목 설계안")
+        # [수정 사항]: 3학년 진단 결과 보기 버튼 옆에 초기화 레이아웃 배치
+        col_btn3, col_btn4 = st.columns([3, 1])
+        with col_btn3:
+            if st.button("🚀 3학년 선택안 AI 진단 결과 보기", key="btn_t2_diag_1", use_container_width=True):
+                if len(g3_1_1_selected) != 5 or len(g3_1_2_selected) != 1 or len(g3_1_3_selected) != 1 or \
+                   len(g3_2_1_selected) != 5 or len(g3_2_2_selected) != 1 or len(g3_2_3_selected) != 1:
+                    st.error("❌ 학교 지정 3학년 수강 신청 학점 규정을 준수하지 않았습니다. 조건 개수를 확인하십시오.")
+                else:
+                    t2_total = g3_1_1_selected + g3_1_2_selected + g3_1_3_selected + g3_2_1_selected + g3_2_2_selected + g3_2_3_selected
+                    run_ai_diagnosis(t2_total, t1_maj, t1_cat, "3학년 과목 설계안")
+        with col_btn4:
+            if st.button("🔄 3학년 선택 초기화", key="reset_3_grade_1", use_container_width=True):
+                for key in list(st.session_state.keys()):
+                    if key.startswith(("3_1_", "3_2_")): st.session_state[key] = False
+                st.rerun()
 
-    # 탭 독립 분리 가동 완료
     with tab2:
         st.header("🤖 2·3학년 통합 최적 패키지 추천")
         selected_option_t3 = st.selectbox("🎯 목표 계열 및 학과를 선택하세요:", major_options, key="t3_major_select_1")
@@ -323,7 +330,6 @@ if grade_auth == "현재 1학년 (2학년 선택과목 설계 시기)":
             st.subheader(f"📋 2·3학년 통합 정밀 추천 포트폴리오")
             st.dataframe(df_all[["순위", "학년", "학기", "그룹명", "과목명", "단위수", "적합도 점수"]], use_container_width=True, hide_index=True)
             
-            # [수정 사항 3]: 더블클릭 필요 없는 카드형 상세 정보 확장 패널 이식
             st.write("---")
             st.subheader("📚 한눈에 보는 과목별 상세 리포트 (더블클릭 불필요)")
             for _, row in df_all.iterrows():
@@ -463,13 +469,21 @@ else:
                 if st.checkbox(sub, key=f"3_2_g3_2_{sub}", disabled=(g323_cnt_2 >= 1 and not chk)): g3_2_3_selected.append(sub)
             st.caption(f"선택 현황: {len(g3_2_3_selected)} / 1 개")
 
-        if st.button("🚀 3학년 설계안 AI 진단받기", key="btn_t2_3_diag_2"):
-            if len(g3_1_1_selected) != 5 or len(g3_1_2_selected) != 1 or len(g3_1_3_selected) != 1 or \
-               len(g3_2_1_selected) != 5 or len(g3_2_2_selected) != 1 or len(g3_2_3_selected) != 1:
-                st.error("❌ 학교 지정 수강 신청 학점 규정을 준수하지 않았습니다. 조건 개수를 확인하십시오.")
-            else:
-                t2_total = g3_1_1_selected + g3_1_2_selected + g3_1_3_selected + g3_2_1_selected + g3_2_2_selected + g3_2_3_selected
-                run_ai_diagnosis(t2_total, t2_3_maj, t2_3_cat, "3학년 과목 설계안")
+        # [수정 사항]: 2학년 모드에서의 3학년 설계안 진단 버튼 옆 초기화 레이아웃 배치
+        col_btn5, col_btn6 = st.columns([3, 1])
+        with col_btn5:
+            if st.button("🚀 3학년 설계안 AI 진단받기", key="btn_t2_3_diag_2", use_container_width=True):
+                if len(g3_1_1_selected) != 5 or len(g3_1_2_selected) != 1 or len(g3_1_3_selected) != 1 or \
+                   len(g3_2_1_selected) != 5 or len(g3_2_2_selected) != 1 or len(g3_2_3_selected) != 1:
+                    st.error("❌ 학교 지정 수강 신청 학점 규정을 준수하지 않았습니다. 조건 개수를 확인하십시오.")
+                else:
+                    t2_total = g3_1_1_selected + g3_1_2_selected + g3_1_3_selected + g3_2_1_selected + g3_2_2_selected + g3_2_3_selected
+                    run_ai_diagnosis(t2_total, t2_3_maj, t2_3_cat, "3학년 과목 설계안")
+        with col_btn6:
+            if st.button("🔄 3학년 선택 초기화", key="reset_3_grade_2", use_container_width=True):
+                for key in list(st.session_state.keys()):
+                    if key.startswith(("3_1_", "3_2_")): st.session_state[key] = False
+                st.rerun()
 
     with tab3:
         st.header("🤖 3학년 맞춤 최적 패키지 추천")
@@ -506,7 +520,6 @@ else:
             st.subheader(f"📋 3학년 맞춤 최적화 포트폴리오")
             st.dataframe(df_all[["순위", "학년", "학기", "그룹명", "과목명", "단위수", "적합도 점수"]], use_container_width=True, hide_index=True)
             
-            # [수정 사항 3]: 더블클릭 필요 없는 카드형 상세 정보 확장 패널 이식
             st.write("---")
             st.subheader("📚 한눈에 보는 과목별 상세 리포트 (더블클릭 불필요)")
             for _, row in df_all.iterrows():
